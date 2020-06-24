@@ -18,9 +18,9 @@ function initializeBreedList(AURL) {
 function getBreeds(catson) {
     let breedlist = [];
     if (!Array.isArray(catson)) {
-        throw {
-            "Error": "Error: received json is not an array"
-        };
+        var e = new Error("Error: Received json is not an array");
+        console.log(e.message);
+        throw e;
     } else {
         for(let c of catson) {
             let id = parser.searchJSON(c,"id");
