@@ -12,14 +12,13 @@ function initializeCat(AURL,breedID, initstrings){
                     cat[x] = stringres;
                 }
                 else {
-                    var e = new Error("Error: Cat data is incomplete, please try again.");
+                    var e = new Error("Error: Cat data is incomplete. Possibly bad URL or keys");
                     console.log(e.message);
                     throw e;
                 }
             }
         resolve(cat);     
         }).catch((e) => {
-            console.log("Error when calling API: " + e.message)
             reject(e);
         });
     });
