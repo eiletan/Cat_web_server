@@ -1,18 +1,20 @@
 require("dotenv").config();
 
 
+var timeoutlength = 10000;
+
 
 // Returns the JSON response of the API
 function callAPI(AURL) {
     let https = require("https");
     let key = process.env.API_KEY;
     let url = AURL + "&api_key=" + key;
-    return new Promise ((resolve, reject) => {
+    const options = {timeout: timeoutlength};
+    return new Promise((resolve, reject) => {
         // From the node js https documentation
-        https.get(url, (resp) => {
+        let request = https.get(url,options,(resp) => {
             let data = '';
 
-  
             resp.on('data', (chunk) => {
                 data += chunk;
             });
@@ -23,10 +25,18 @@ function callAPI(AURL) {
                 resolve(rep);
             });
 
-            }).on("error", (err) => {
-                console.log("Error: " + err.message);
-                reject(err);
-            });
+        }).on("error", (err) => {
+            console.log("Error: " + err.message);
+            reject(err);
+        });
+
+        request.setTimeout(timeoutlength,() =>{
+            var e = new Error("Error: Request timed out");
+            console.log(e.message);
+            request.destroy();
+            reject(e);
+        })
+
     });
 }
 
