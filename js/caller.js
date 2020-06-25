@@ -26,15 +26,13 @@ function callAPI(AURL) {
             });
 
         }).on("error", (err) => {
-            console.log("Error: " + err.message);
+            console.log(err.message);
             reject(err);
         });
 
         request.setTimeout(timeoutlength,() =>{
             var e = new Error("Error: Request timed out as it took over " + timeoutlength/1000 + " seconds to resolve.");
-            console.log(e.message);
-            request.destroy();
-            reject(e);
+            request.destroy(e);
         })
 
     });
