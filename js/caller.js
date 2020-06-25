@@ -31,7 +31,7 @@ function callAPI(AURL) {
         });
 
         request.setTimeout(timeoutlength,() =>{
-            var e = new Error("Error: Request timed out");
+            var e = new Error("Error: Request timed out as it took over " + timeoutlength/1000 + " seconds to resolve.");
             console.log(e.message);
             request.destroy();
             reject(e);
