@@ -30,4 +30,10 @@ function getBreeds(catson) {
     return breedlist;
 }
 
+
+// Returns a JSON object which has two image links of each cat breed
+function getImageLinks() {
+    // stub for now
+}
+
 module.exports.initializeBreedList = initializeBreedList;

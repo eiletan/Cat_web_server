@@ -14,6 +14,4 @@ function performQuery(con,query){
 }
 
 
-
-
 module.exports.performQuery = performQuery;
