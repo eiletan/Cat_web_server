@@ -1,11 +1,12 @@
 const expect = require("chai").expect;
 const mysql = require("mysql");
 const DBH = require("../js/DBHandler.js");
+const CatHandler = require("../js/CatHandler.js");
 
 var con;
 
 const cname = "testcat";
-const ctable = "CREATE TABLE " + cname + " (breedID VARCHAR(255),name VARCHAR(255),description VARCHAR(255))";
+const ctable = "CREATE TABLE " + cname + " (breedID VARCHAR(255),name VARCHAR(255),description LONGTEXT)";
 
 
 
@@ -125,4 +126,39 @@ describe("Database tests", function () {
             expect(typeof err == "error");
         });
     });
+
+    it ("should insert into the database all cat objects",function() {
+        let tcall = CatHandler.initializeBreedList("https://api.thecatapi.com/v1/breeds?");
+        return tcall.then((blist) => {
+            expect(blist.length).to.be.equal(67);
+            return CatHandler.initAllBreeds("https://api.thecatapi.com/v1/images/search?breed_ids=",blist,["description","name"]);
+        }).then((list) => {
+            return DBH.insertAllCats(con,list,cname);
+        }).then((res) => {
+            console.log("success");
+            expect(typeof res == "object");
+        }).catch((err) => {
+            expect.fail(err);
+        })
+    });
+
+    it ("should insert into the database all cat objects only once",function() {
+        let tcall = CatHandler.initializeBreedList("https://api.thecatapi.com/v1/breeds?");
+        return tcall.then((blist) => {
+            expect(blist.length).to.be.equal(67);
+            return CatHandler.initAllBreeds("https://api.thecatapi.com/v1/images/search?breed_ids=",blist,["description","name"]);
+        }).then((list) => {
+            let twice = [];
+            let ins = DBH.insertAllCats(con,list,cname);
+            twice.push(ins);
+            twice.push(ins);
+            return Promise.all(twice);
+        }).then((res) => {
+            console.log("success");
+            expect(typeof res == "object");
+        }).catch((err) => {
+            expect.fail(err);
+        })
+    });
+
 });
