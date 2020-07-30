@@ -56,4 +56,20 @@ describe("Cat Handler Tests", function() {
             expect.fail(err);
         })
     });
+
+    it ("should process list of cat objects", function () {
+        let tcall = CatHandler.initializeBreedList("https://api.thecatapi.com/v1/breeds?");
+        return tcall.then((blist) => {
+            expect(blist.length).to.be.equal(67);
+            return CatHandler.initAllBreeds("https://api.thecatapi.com/v1/images/search?breed_ids=",blist,["description","name"]);
+        }).then((list) => {
+            expect(list.length).to.be.equal(67);
+            console.log("printing processed list object");
+            console.log(CatHandler.processCats(list));
+        }).then().catch((err) => {
+            expect.fail(err);
+        })
+    })
+
+
 });

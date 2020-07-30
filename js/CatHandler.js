@@ -43,6 +43,10 @@ function getImageLinks(breeds, AURL, num) {
     return Promise.all(promises);
 }
 
+function getImagePaths() {
+    
+}
+
 // Helper function to get the link of the image of one specified breed
 // If unable to call the api or an error occurs for some reason, the promise is resolved with null
 function getImage(AURL, breed) {
@@ -88,7 +92,18 @@ function initAllBreeds(AURL,breeds,initstrings) {
     return Promise.all(initp);
 }
 
+// Processes the list of cats to make it easily searchable by breedID
+function processCats(cats) {
+    let ret = {};
+    for (let x of cats) {
+        let key = Object.keys(x)[0];
+        ret[x[key]] = x;
+    }
+    return ret;
+}
+
 module.exports.initializeBreedList = initializeBreedList;
 module.exports.getImageLinks = getImageLinks;
 module.exports.processList = processList;
 module.exports.initAllBreeds = initAllBreeds;
+module.exports.processCats = processCats;

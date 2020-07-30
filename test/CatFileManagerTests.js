@@ -3,6 +3,7 @@ const ch = require("../js/CatHandler.js");
 const fs = require("fs-extra");
 const expect = require("chai").expect;
 const imagedir = __dirname + "/images";
+const DBH = require("../js/DBHandler.js");
 
 
 describe("Cat File Manager Tests", function() {
@@ -28,7 +29,7 @@ describe("Cat File Manager Tests", function() {
             // console.log(ilist);
             let imgobj = ch.processList(ilist);
             expect(ilist.length).to.be.equal(134);
-            return cfm.downloadAll(imgobj,imagedir + "\\");
+            return cfm.downloadAll(imgobj,__dirname,"\\images" + "\\");
         }).then((res) => {
             console.log("success!");
         }).catch((err) => {
@@ -46,7 +47,7 @@ describe("Cat File Manager Tests", function() {
             // console.log(ilist);
             let imgobj = ch.processList(ilist);
             expect(ilist.length).to.be.equal(134);
-            return cfm.downloadAll(imgobj,imagedir + "\\");
+            return cfm.downloadAll(imgobj,__dirname,"\\images" + "\\");
         }).then((res) => {
             console.log("success!");
             return cfm.readDirectory(imagedir + "/");
@@ -67,7 +68,7 @@ describe("Cat File Manager Tests", function() {
             // console.log(ilist);
             let imgobj = ch.processList(ilist);
             expect(ilist.length).to.be.equal(134);
-            return cfm.downloadAll(imgobj,imagedir + "\\");
+            return cfm.downloadAll(imgobj,__dirname,"\\images" + "\\");
         }).then((res) => {
             console.log("success!");
             return cfm.readDirectory(imagedir + "/");

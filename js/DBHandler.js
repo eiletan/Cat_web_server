@@ -1,5 +1,44 @@
+const mysql = require("mysql");
+
+
+// Opens connection and returns it
+function openCon() {
+    const con = mysql.createConnection({
+        host: "localhost",
+        user: "root",
+        password: "password",
+        database: "catdatabase"
+      });
+    return new Promise((resolve,reject) => {
+        con.connect(function(err) {
+            if (err){
+              reject(err);
+            } 
+            resolve(con);
+          });
+    });   
+}
+
+
 // Sends the query to the database and returns the results in a JSON Array
 function performQuery(con,query){
+    let arr;
+
+    if(arguments.length === 3) {
+        arr = arguments[2];
+        let qp = new Promise((resolve,reject) => {
+            con.query(query,arr,(err,result) => {
+                if (err) {
+                    console.log("Error performing query: " + err);
+                    reject(err);
+                }
+                let resArray = Object.values(JSON.parse(JSON.stringify(result))); 
+                resolve(resArray);
+            }); 
+        });
+        return qp;
+    }
+
     let qp = new Promise((resolve,reject) => {
         con.query(query,(err,result) => {
             if (err) {
@@ -13,16 +52,10 @@ function performQuery(con,query){
     return qp;
 }
 
-// Inserts every cat object into the database
-function insertAllCats(con,cats, table) {
-    let qps = [];
-    for (let c of cats) {
-         let insertsql = "INSERT INTO " +table+" (breedID,name,description) SELECT * FROM (SELECT '" +c["breedID"]+  "' as breedID, '" +c["name"] + "' as name, '" +c["description"]+  "' as description) AS tmp " +
-         "WHERE NOT EXISTS ( SELECT breedID FROM " +table+  " WHERE breedID = '" +c["breedID"]+ "') LIMIT 1";
-         let qp = performQuery(con,insertsql);
-         qps.push(qp);
-    }
-    return Promise.all(qps);
+
+function insertAll(con,bulkcats,isql) {
+    let qp = performQuery(con,isql,[bulkcats]);
+    return qp;
 }
 
 // Inserts every cat image into the database, what is inserted is the path on disk to the image
@@ -52,8 +85,24 @@ function reverseProcessString(string) {
     return processed;
 }
 
+// Converts the list of cat objects into a list of list values for a bulk insert statement
+function prepareBulkInsert(cats) {
+    let ret = [];
+    let keys = Object.keys(cats[0]);
+    for (let x of cats) {
+        let temp = [];
+        for (let i = 0; i < keys.length; i++) {
+            temp.push(x[keys[i]]);
+        }
+        ret.push(temp);
+    }
+    return ret;
+}
 
-module.exports.insertAll = insertAllCats;
+
+module.exports.insertAll = insertAll;
 module.exports.performQuery = performQuery;
 module.exports.processString = processString;
 module.exports.reverseProcessString = reverseProcessString;
+module.exports.openCon = openCon;
+module.exports.prepareBulkInsert = prepareBulkInsert;

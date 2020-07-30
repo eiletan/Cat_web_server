@@ -2,15 +2,21 @@ const expect = require("chai").expect;
 const mysql = require("mysql");
 const DBH = require("../js/DBHandler.js");
 const CatHandler = require("../js/CatHandler.js");
+const imagedir = __dirname + "/images";
+const cfm = require("../js/CatFileManager.js");
+const fs = require("fs-extra");
 
 var con;
 
 const cname = "testcat";
-const ctable = "CREATE TABLE " + cname + " (breedID VARCHAR(255),name VARCHAR(255),description LONGTEXT)";
+const img = "testimage"
+const ctable = "CREATE TABLE " + cname + " (breedID VARCHAR(255),name VARCHAR(255),description LONGTEXT, PRIMARY KEY (breedID))";
+const testimgt = "CREATE TABLE " + img + " (breedID VARCHAR(255),imgpath VARCHAR(255), FOREIGN KEY (breedID) REFERENCES testcat(breedID) ON UPDATE CASCADE ON DELETE CASCADE)";
 
 
 
 describe("Database tests", function () {
+    this.timeout(60000);
     // Connects to the database before the test suite runs
     before(function (done) {
         con = mysql.createConnection({
@@ -47,18 +53,30 @@ describe("Database tests", function () {
                 throw err;
             }
             console.log("Test table created");
-            done();
+            con.query(testimgt, function (err,result) {
+                if (err) {
+                    throw err;
+                }
+                console.log("2nd table created");
+                done();
+            });
         });
     });
 
     // Deletes the test table after each test
     afterEach(function (done) {
-        con.query("DROP TABLE " + cname, function (err, result) {
+        con.query("DROP TABLE " + img, function (err, result) {
             if (err) {
                 throw err;
             }
             console.log("Test table dropped");
-            done();
+            con.query("DROP TABLE " + cname, function (err,result) {
+                if (err) {
+                    throw err;
+                }
+                console.log("test table 2 dropped");
+                done();
+            })
         });
     });
 
@@ -127,38 +145,117 @@ describe("Database tests", function () {
         });
     });
 
-    it ("should insert into the database all cat objects",function() {
+    it ("should return list of all cat objects,prepped for bulk insert",function() {
         let tcall = CatHandler.initializeBreedList("https://api.thecatapi.com/v1/breeds?");
         return tcall.then((blist) => {
             expect(blist.length).to.be.equal(67);
             return CatHandler.initAllBreeds("https://api.thecatapi.com/v1/images/search?breed_ids=",blist,["description","name"]);
         }).then((list) => {
-            return DBH.insertAllCats(con,list,cname);
-        }).then((res) => {
-            console.log("success");
-            expect(typeof res == "object");
+            expect(list.length).to.be.equal(67);
+            return DBH.prepareBulkInsert(list);
+        }).then((list) => {
+            console.log(list);
         }).catch((err) => {
             expect.fail(err);
         })
     });
 
-    it ("should insert into the database all cat objects only once",function() {
+    it ("should batch insert",function() {
         let tcall = CatHandler.initializeBreedList("https://api.thecatapi.com/v1/breeds?");
         return tcall.then((blist) => {
             expect(blist.length).to.be.equal(67);
-            return CatHandler.initAllBreeds("https://api.thecatapi.com/v1/images/search?breed_ids=",blist,["description","name"]);
+            return CatHandler.initAllBreeds("https://api.thecatapi.com/v1/images/search?breed_ids=",blist,["name","description"]);
         }).then((list) => {
-            let twice = [];
-            let ins = DBH.insertAllCats(con,list,cname);
-            twice.push(ins);
-            twice.push(ins);
-            return Promise.all(twice);
+            expect(list.length).to.be.equal(67);
+            return DBH.prepareBulkInsert(list);
+        }).then((list) => {
+            let isql = "INSERT INTO testcat" +
+            " VALUES ? as tc ON DUPLICATE KEY UPDATE description = tc.description, name = tc.name;"
+            return DBH.insertAll(con,list,isql);
         }).then((res) => {
-            console.log("success");
-            expect(typeof res == "object");
+            console.log("done");
         }).catch((err) => {
             expect.fail(err);
         })
     });
+
+    it ("should batch insert, then leave the first one alone, and update the second one",function() {
+        let tcall = CatHandler.initializeBreedList("https://api.thecatapi.com/v1/breeds?");
+        let lall;
+        return tcall.then((blist) => {
+            expect(blist.length).to.be.equal(67);
+            return CatHandler.initAllBreeds("https://api.thecatapi.com/v1/images/search?breed_ids=",blist,["name","description"]);
+        }).then((list) => {
+            expect(list.length).to.be.equal(67);
+            return DBH.prepareBulkInsert(list);
+        }).then((list) => {
+            lall = list;
+            let isql = "INSERT INTO testcat" +
+            " VALUES ? as tc ON DUPLICATE KEY UPDATE description = tc.description, name = tc.name;"
+            return DBH.insertAll(con,list,isql);
+        }).then((res) => {
+            lall[1][1] = "yeehaw";
+            let newl = [lall[0],lall[1]];
+            return DBH.prepareBulkInsert(newl);
+        }).then((list) => {
+            let isql = "INSERT INTO testcat" +
+            " VALUES ? as tc ON DUPLICATE KEY UPDATE description = tc.description, name = tc.name;"
+            return DBH.insertAll(con,list,isql);
+        }).then((res) => {
+            console.log("success");
+        }).catch((err) => {
+            expect.fail(err);
+        })
+    });
+
+    it ("should batch insert, and the insert image paths",function() {
+        let tcall = CatHandler.initializeBreedList("https://api.thecatapi.com/v1/breeds?");
+        let lall;
+        return tcall.then((blist) => {
+            expect(blist.length).to.be.equal(67);
+            return CatHandler.initAllBreeds("https://api.thecatapi.com/v1/images/search?breed_ids=",blist,["name","description"]);
+        }).then((list) => {
+            expect(list.length).to.be.equal(67);
+            return DBH.prepareBulkInsert(list);
+        }).then((list) => {
+            lall = list;
+            let isql = "INSERT INTO testcat" +
+            " VALUES ? as tc ON DUPLICATE KEY UPDATE description = tc.description, name = tc.name;"
+            return DBH.insertAll(con,list,isql);
+        }).then((res) => {
+            lall[1][1] = "yeehaw";
+            let newl = [lall[0],lall[1]];
+            return DBH.prepareBulkInsert(newl);
+        }).then((list) => {
+            let isql = "INSERT INTO testcat" +
+            " VALUES ? as tc ON DUPLICATE KEY UPDATE description = tc.description, name = tc.name;"
+            return DBH.insertAll(con,list,isql);
+        }).then((res) => {
+            console.log("success");
+            fs.mkdirSync(imagedir);
+            let tcall = CatHandler.initializeBreedList("https://api.thecatapi.com/v1/breeds?");
+            return tcall;
+        }).then((blist) => {
+            expect(blist.length).to.be.equal(67);
+            return CatHandler.getImageLinks(blist,"https://api.thecatapi.com/v1/images/search?breed_ids=",2);
+        }).then((ilist) => {
+            // console.log(ilist);
+            let imgobj = CatHandler.processList(ilist);
+            expect(ilist.length).to.be.equal(134);
+            return cfm.downloadAll(imgobj,imagedir + "\\");
+        }).then((res) => {
+            let isql = "INSERT INTO " + img + " VALUES ?";
+            return DBH.insertAll(con,res,isql);
+        }).then((res) => {
+            console.log("success!");
+            fs.removeSync(imagedir);
+        }).catch((err) => {
+            fs.removeSync(imagedir);
+            expect.fail(err);
+        }).catch((err) => {
+            expect.fail(err);
+        })
+    });
+    
 
 });

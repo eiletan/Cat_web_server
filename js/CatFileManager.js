@@ -3,18 +3,20 @@ const https = require("https");
 const path = require("path");
 
 // From https://stackoverflow.com/questions/11944932/how-to-download-a-file-with-node-js-without-using-third-party-libraries
-// Resolves with 1 if successful, and rejects with err if unsuccessful
-function downloadImage(url, dest) {
+// Resolves with path if successful, and resolves with null if unsuccessful
+function downloadImage(url,dirname,relativepath, name, num) {
+  let dest = dirname + relativepath + name + num + ".jpg";
+  let relname = relativepath + name + num + ".jpg";
   return new Promise((resolve, reject) => {
     let file = fs.createWriteStream(dest);
     let request = https.get(url, (response) => {
       response.pipe(file);
       file.on('finish', () => {
-        resolve(1);
+        resolve([name,relname]);
       });
     }).on('error', (err) => { // Handle errors
       fs.unlinkSync(dest);
-      reject(err);
+      resolve(null);
     });
   });
 };
@@ -23,15 +25,15 @@ function downloadImage(url, dest) {
 // Downloads images for each cat breed
 // DEST must be the path to the desired folder, the file naming occurs in this function
 // Ex. DEST can be __dirname/images/
-function downloadAll(imgobj, path) {
+function downloadAll(imgobj,dirname,relativepath) {
   let ps = [];
   let keys = Object.keys(imgobj);
   for (let ci of keys) {
     let imgs = imgobj[ci];
     for (let i = 0; i < imgs.length; i++) {
       let cnt = i + 1;
-      let ext = ci + cnt.toString() + ".jpg";
-      let dp = downloadImage(imgs[i], path + ext);
+      // let ext = ci + cnt.toString() + ".jpg";
+      let dp = downloadImage(imgs[i],dirname,relativepath, ci, cnt.toString());
       ps.push(dp);
     }
   }
