@@ -1,0 +1,37 @@
+:root {
+    --img-height: 260px;
+}
+
+
+
+body {
+    background-image: url("gradient.png");
+    background-size: cover;
+}
+
+.headings {
+    text-align: center;   
+}
+
+
+#cat-container {
+    height: var(--img-height);
+    padding-top: 10px;
+    padding-left: 5px;
+    padding-bottom: 10px;
+    overflow-y: auto;
+    border: 2px solid black;
+}
+
+#cat-image {
+    width: 250px;
+    height: 250px;
+    border: 5px inset gold;
+    float: left;
+    margin-right: 5px;
+}
+
+.cat-container-namespan {
+    font-size: 30px;
+    border-bottom: 2px solid black;
+}
