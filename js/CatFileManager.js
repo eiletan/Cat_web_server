@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs-extra");
 const https = require("https");
 const path = require("path");
 
@@ -79,8 +79,14 @@ function removeFilesLoop(dirpath, files) {
   }
 }
 
+function clearDir(dir) {
+  fs.removeSync(dir);
+  fs.mkdirSync(dir);
+}
+
 
 module.exports.downloadImage = downloadImage;
 module.exports.downloadAll = downloadAll;
 module.exports.readDirectory = readDirectory;
 module.exports.removeFilesInDirectory = removeFilesInDirectory;
+module.exports.clearDir = clearDir;

@@ -102,8 +102,17 @@ function processCats(cats) {
     return ret;
 }
 
+function processDownloaded(arr) {
+    let ret = {};
+    for(let val of arr) {
+        ret[val[0]] = val[1];
+    }
+    return ret;
+}
+
 module.exports.initializeBreedList = initializeBreedList;
 module.exports.getImageLinks = getImageLinks;
 module.exports.processList = processList;
 module.exports.initAllBreeds = initAllBreeds;
 module.exports.processCats = processCats;
+module.exports.processDownloaded = processDownloaded;
