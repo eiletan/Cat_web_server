@@ -83,6 +83,25 @@ function processList(ilist) {
     return probj;
 }
 
+function processDownloaded(list) {
+    let probj = {};
+    let temp = "";
+    for (let x of list) {
+        let key = x[0];
+        if (temp === key) {
+            if (!Array.isArray(probj[key])) {
+                probj[key] = [x[1]];
+            } else {
+                probj[key].push(x[1]);
+            }
+        } else {
+            probj[key] = [x[1]];
+            temp = key;
+        }
+    }
+    return probj;
+}
+
 // Creates a cat object for every breed, an array of these objects is returned
 function initAllBreeds(AURL,breeds,initstrings) {
     let initp = [];
@@ -102,13 +121,6 @@ function processCats(cats) {
     return ret;
 }
 
-function processDownloaded(arr) {
-    let ret = {};
-    for(let val of arr) {
-        ret[val[0]] = val[1];
-    }
-    return ret;
-}
 
 module.exports.initializeBreedList = initializeBreedList;
 module.exports.getImageLinks = getImageLinks;

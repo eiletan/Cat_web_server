@@ -4,59 +4,45 @@ const mysql = require("mysql");
 const CFM = require("./CatFileManager");
 const CH = require("./CatHandler.js");
 const DBH = require("./DBHandler.js");
+const path = require("path");
 
 class CatInsight {
-    AURLobj;
-    initstrings;
-    dir;
-    memcats;
-    memcatimgs;
-    constructor(AURLObj, initstrings,dir) {
-        this.AURLobj = AURLObj;
-        this.initstrings = initstrings;
-        this.dir = dir;
+
+    constructor() {
+        this.memcats = [];
+        this.memcatimgs = {};
+        this.AURLobj = {
+                breedsall: "https://api.thecatapi.com/v1/breeds?",
+                cat: "https://api.thecatapi.com/v1/images/search?breed_ids="
+            }
+        this.initstrings = ["name", "description"];
+        this.dir = path.join(__dirname,"../");
     }
 
-    // If the database cannot be connected to for any reason, then the cats are stored in memory
-    // aurlall is the url for getting all breeds, aurlind is the url for individual cats, and info is an array 
-    // which contains all the descriptors for the cat object
+
     updateCatInfo(num) {
         let catbidscall = CH.initializeBreedList(this.AURLobj["breedsall"]);
-        let catsinsertion;
-        let cat;
         let blist;
-        let con;
+        let promise = new Promise((resolve,reject) => {
             catbidscall.then((resultlist) => {
                 blist = resultlist;
                 let initcatscall = CH.initAllBreeds(this.AURLobj["cat"], resultlist, this.initstrings);
                 return initcatscall;
             }).then((res) => {
                 this.memcats = res;
-                cat = res;
-                return DBH.prepareBulkInsert(res);
-            }).then((icats) => {
-                catsinsertion = icats;
-                let getcon = DBH.openCon();
-                return getcon;
-            }).then((conn) => {
-                con = conn;
-                let isql = "INSERT INTO cat" +
-                    " VALUES ? as c ON DUPLICATE KEY UPDATE description = c.description, name = c.name;"
-                let dbinsert = DBH.insertAll(con, catsinsertion, isql);
-                return dbinsert;
+                return this.updateCatImages(this.AURLobj, blist, num);
             }).then((res) => {
-                console.log("done inserting!");
-                return this.updateCatImages(this.AURLobj, blist, num, con);
-            }).then((res) => {
-                console.log("updating done");
+                console.log("done updating!");
+                resolve();
             }).catch((err) => {
                 console.log(err.message);
-                
+                reject();
             });
+        });
+       return promise;     
     }
 
-    updateCatImages(AURLObj, list, num, con) {
-        let imgpaths;
+    updateCatImages(AURLObj, list, num) {
         return new Promise((resolve, reject) => {
             CH.getImageLinks(list, AURLObj["cat"], num).then((imagelist) => {
                 let imgobj = CH.processList(imagelist);
@@ -64,30 +50,36 @@ class CatInsight {
                 return CFM.downloadAll(imgobj, this.dir, "\\images" + "\\");
             }).then((imagepaths) => {
                 this.memcatimgs = CH.processDownloaded(imagepaths);
-                imgpaths = imagepaths;
-                let delsql1 = "SET SQL_SAFE_UPDATES=0";
-                return DBH.performQuery(con, delsql1);
-            }).then((res) => {
-                let delsql = "delete from catimage";
-                return DBH.performQuery(con, delsql);
-            }).then((res) => {
-                let delsql2 = "SET SQL_SAFE_UPDATES=1";
-                return DBH.performQuery(con, delsql2);
-            }).then((res) => {
-                let isql = "INSERT INTO catimage VALUES ?";
-                return DBH.insertAll(con, imgpaths, isql);
-            }).then((res) => {
-                console.log("inserted and downloaded!");
                 resolve();
             }).catch((err) => {
-                con.query("SET SQL_SAFE_UPDATES=1", function (errorr, result, fields) {
-                    if (error) {
-                        console.log(error);
-                    }
-                    reject(err);
-                });
+                console.log(err.message);
+                reject(err);
             });
         });
+    }
+
+    chooseCat() {
+        try {
+        let n = this.memcats.length;
+        let num = Math.floor(Math.random()*n);
+        let cat = this.memcats[num];
+        let bid = cat["breedID"];
+        let n2 = this.memcatimgs[bid].length;
+        let num2 = Math.floor(Math.random()*n2);
+        let ret = {};
+        ret["breedID"] = bid;
+        ret["name"] = cat["name"];
+        ret["description"] = cat["description"];
+        ret["image"] = this.memcatimgs[bid][num2];
+        for (let key in ret) {
+            if (ret[key] === null || ret[key === undefined]) {
+                throw new Error();
+            }
+        }
+        return ret;
+        } catch (err) {
+            return null;
+        }
     }
 }
 
