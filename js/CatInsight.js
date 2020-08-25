@@ -46,8 +46,8 @@ class CatInsight {
         return new Promise((resolve, reject) => {
             CH.getImageLinks(list, AURLObj["cat"], num).then((imagelist) => {
                 let imgobj = CH.processList(imagelist);
-                CFM.clearDir(this.dir+"\\images");
-                return CFM.downloadAll(imgobj, this.dir, "\\images" + "\\");
+                CFM.clearDir(this.dir+"\\public\\images");
+                return CFM.downloadAll(imgobj, this.dir, "\\public\\images" + "\\");
             }).then((imagepaths) => {
                 this.memcatimgs = CH.processDownloaded(imagepaths);
                 resolve();
