@@ -8,6 +8,7 @@ class Server {
     #port;
     #app;
     #CInsight;
+    #inst;
 
     constructor(port) {
         this.#port = port;
@@ -21,7 +22,7 @@ class Server {
             this.#CInsight.updateCatInfo(2).then((res) => {
                 try {
                     if (this.#app !== undefined) {
-                        this.#app.listen(this.#port, () => {
+                        this.#inst = this.#app.listen(this.#port, () => {
                             console.log("Server running and listening on port: " + this.#port);
                             resolve(true);
                         });
@@ -43,10 +44,10 @@ class Server {
                     });
 
                     this.#app.put("/replace/:num", (req, res) => {
-                        this.#CInsight.updateCatInfo(req.params.num).then((res) => {
+                        this.#CInsight.updateCatInfo(req.params.num).then((result) => {
                             res.status(201).json({result: true});
                         }).catch((err) => {
-                            res.status(501).json({result: false});
+                            res.status(501).json({result: false, error: err.message});
                         });
                     });
 
@@ -58,6 +59,13 @@ class Server {
                 console.log("we got an error");
                 reject(err);
             });
+        });
+    }
+
+    stop() {
+        return new Promise((resolve) => {
+            this.#inst.close();
+            resolve();
         });
     }
 }

@@ -12,12 +12,19 @@
     <p class="titlecard">THE CAT</p>
     <div id="cat-container"><img id="cat-image" src="cat_default.jpg">
         <span class="cat-container-namespan"><b><i>The Skateboard Cat</i></b></span>
-        <p class="cat-container-description"> <br> The Skateboard Cat is a rare breed of cat, commonly known for 
+        <p class="cat-container-description"> <br> The Skateboard Cat is a rare breed of cat, commonly known for
             little skateboards on their heads and being extremely cute.
         </p>
     </div>
     <button id="reroll" onclick="reroll()">Reroll!</button>
-    <button id="refresh" onclick= "refresh()">Refresh the cat database!</button>
+    <div>
+        <label for="site-input">Specify the amount of images per cat you want when refreshing the database. Must be between 1 and 5. If an invalid input is given, defaults to 2</label> <br>
+        <input class="site-input" type="text" id="site-input"
+            value="2"><br>
+        <button type="submit" class="site-button" onclick="callRefresh()">Refresh!</button>
+    </div>
+
+
     <script type="text/javascript" src="front.js"></script>
 </body>
 
